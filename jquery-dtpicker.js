@@ -1,3 +1,11 @@
+/*
+ * jquery-dtpicker jQuery extension
+ * http://code.google.com/p/jquery-dtpicker/
+ *
+ * Copyright (c) 2009 Jack Douglas
+ * Released under the MIT license
+ * http://www.opensource.net/licenses/mit-license.html
+ */
 $.fn.extend({
   dtpicker:function(){
     function do_elements(a, f){

@@ -48,9 +48,9 @@
             if (l_type==="date") {
               this.output = this.output_part+'-01-01';
             } else if (l_type==="datetime") {
-              this.output = this.output_part+'-01-01T00:00';
-            } else if (l_type==="datetime-local") {
               this.output = this.output_part+'-01-01T00:00Z';
+            } else if (l_type==="datetime-local") {
+              this.output = this.output_part+'-01-01T00:00';
             }
           }
           Decade.prototype.toString = function() { return this.min_year + 's'; };
@@ -61,9 +61,9 @@
             if (l_type==="date") {
               this.output = this.output_part+'-01-01';
             } else if (l_type==="datetime") {
-              this.output = this.output_part+'-01-01T00:00';
-            } else if (l_type==="datetime-local") {
               this.output = this.output_part+'-01-01T00:00Z';
+            } else if (l_type==="datetime-local") {
+              this.output = this.output_part+'-01-01T00:00';
             }
           }
           Year.prototype.toString = function() { return this.output_part; };
@@ -75,9 +75,9 @@
             if (l_type==="date") {
               this.output = this.output_part+'-01';
             } else if (l_type==="datetime") {
-              this.output = this.output_part+'-01T00:00';
-            } else if (l_type==="datetime-local") {
               this.output = this.output_part+'-01T00:00Z';
+            } else if (l_type==="datetime-local") {
+              this.output = this.output_part+'-01T00:00';
             }
           }
           Month.prototype.toString = function() { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][this.month - 1]; };
@@ -98,9 +98,9 @@
             if (l_type==="date") {
               this.output = this.output_part;
             } else if (l_type==="datetime") {
-              this.output = this.output_part+'T00:00';
-            } else if (l_type==="datetime-local") {
               this.output = this.output_part+'T00:00Z';
+            } else if (l_type==="datetime-local") {
+              this.output = this.output_part+'T00:00';
             }
           }
           Day.prototype.toString = function() { return this.day; };
@@ -114,9 +114,9 @@
               this.output_part = this.day.output_part+"T"+("0"+this.hour).slice(-2);
             }
             if (l_type==="datetime") {
-              this.output = this.output_part+':00';
-            } else if (l_type==="datetime-local") {
               this.output = this.output_part+':00Z';
+            } else if (l_type==="datetime-local") {
+              this.output = this.output_part+':00';
             } else if (l_type==="time") {
               this.output = this.output_part+':00';
             }
@@ -127,8 +127,10 @@
             this.hour = p_hour; 
             this.minute = p_minute; 
             this.output_part = this.hour.output_part+":"+("0"+this.minute).slice(-2);
-            if (l_type==="datetime-local") {
+            if (l_type==="datetime") {
               this.output = this.output_part+'Z';
+            } else {
+              this.output = this.output_part;
             }
           }
           Minute.prototype.toString = function() { return ("0"+this.minute).slice(-2); };
@@ -160,7 +162,7 @@
             });
           }
           //
-          function do_from_date(s) {
+          function do_from_date() {
             a = [];
             for (i=194; i<=201; i++) { a.push(new Decade(i)); }
             do_elements.call(l_maindiv, a, function(s, p){
@@ -180,7 +182,7 @@
                     a = [];
                     for (i=p.min_day; i<=p.max_day; i++) { a.push(new Day(p, i)); }
                     if ((l_type==="datetime") || (l_type==="datetime-local")) {
-                      do_elements.call(s, a, do_from_time);
+                      do_elements.call(s, a, function(s, p){ do_from_time(s, p) });
                     } else {
                       do_elements.call(s, a, function(s, p){ do_elements.call(s, [], function(){}) });
                     }
@@ -191,9 +193,9 @@
           }
           //
           if (l_type==="time") {
-            do_from_time(l_maindiv, null);
+            do_from_time(l_maindiv);
           } else {
-            do_from_date(l_maindiv);
+            do_from_date();
           }
         });
       });

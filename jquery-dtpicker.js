@@ -11,7 +11,7 @@
   $.fn.extend({
     dtpicker:function(){
       return this.each(function() {
-        var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade;
+        var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade, l_min_month, l_max_month, l_min_day, l_max_day;
         if (this.tagName !== "INPUT") { throw "not an input element" }
         l_type = this.getAttribute("type");
         if ((l_type !== "date") && (l_type !== "datetime") && (l_type !== "datetime-local") && (l_type !== "time")) { return; }
@@ -22,6 +22,10 @@
         l_max_year = (l_max===null)?3000:Number(l_max.slice(0,4));
         l_min_decade = Math.floor(l_min_year/10);
         l_max_decade = Math.floor(l_max_year/10);
+        l_min_month = (l_min===null)?1:Number(l_min.slice(5,7));
+        l_max_month = (l_max===null)?12:Number(l_max.slice(5,7));
+        l_min_day = (l_min===null)?1:Number(l_min.slice(8,10));
+        l_max_day = (l_max===null)?31:Number(l_max.slice(8,10));
         function display() {
           var l_input, l_maindiv, a, i;
           // helper classes
@@ -125,9 +129,16 @@
             s = this;
             if(o===undefined) { 
               o = Math.max(0, Math.floor(a.length/2)-6); 
-              if(a[0] instanceof Year) {
+              if(a[0] instanceof Yeargroup) {
                 for (i=0; i<a.length; i++){ 
-                  if(a[i].year = l_this_year) {
+                  if((a[i].min_year<=l_this_year) && (a[i].max_year>=l_this_year)) {
+                    o = Math.max(0, Math.min(i, a.length-11));
+                    break;
+                  }
+                }
+              } else if (a[0] instanceof Year) {
+                for (i=0; i<a.length; i++){ 
+                  if(a[i].year===l_this_year) {
                     o = Math.max(0, Math.min(i, a.length-11));
                     break;
                   }
@@ -146,19 +157,28 @@
               $(this).parent().nextAll("div").remove();
               d = $(this).parent().after("<div></div>").next("div").css({'float':'left', 'background':'#F2F2F2', 'padding':'0px', 'margin':'1px'});
             }
+            d.mouseenter(function(){ 
+              l_input.unbind("blur", die).css("background", "green"); 
+            });
             if (o>0) {
-              d.append("<div>&uarr;</div>").children("div:last-child")
+              d.append("<div><label>&uarr;</label></div>").children("div:last-child")
                   .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px', 'text-align':'center'})
+                  .mouseenter(function(){ 
+                    l_input.unbind("blur", die).css("background", "green"); 
+                  })
                   .click(function(event){
                     event.stopPropagation();
                     l_input.focus();
-                    do_elements.call(s, a, f, Math.max(0, o-9));
+                    do_elements.call(s, a, f, Math.max(0, o-10));
                   });
             }
             for (i=o; i<o+Math.min(a.length, m); i++){ 
               (function(e){
                 d.append("<div><label>" + e + "</label></div>").children("div:last-child")
                     .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px'})
+                    .mouseenter(function(){ 
+                      l_input.unbind("blur", die).css("background", "green"); 
+                    })
                     .click(function(event){ 
                       event.stopPropagation();
                       l_input.val(e.output);
@@ -168,44 +188,42 @@
                     .mouseenter(function(event){ 
                       event.stopPropagation();
                       f(this, e); 
-                    });
+                    }).children().mouseenter(function(){ l_input.unbind("blur", die).css("background", "green"); });
               }(a[i]));
             }
             if (a.length>o+m) {
-              d.append("<div>&darr;</div>").children("div:last-child")
+              d.append("<div><label>&darr;</label></div>").children("div:last-child")
                   .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px', 'text-align':'center'})
+                  .mouseenter(function(){ 
+                    l_input.unbind("blur", die).css("background", "green"); 
+                  })
                   .click(function(event){ 
-                    l_input.focus();
-                    do_elements.call(s, a, f, Math.min(a.length-11, o+9));
                     event.stopPropagation();
+                    l_input.focus();
+                    do_elements.call(s, a, f, Math.min(a.length-11, o+10));
                   });
             }
           } 
           // initialise (create main div and handle destruction conditions)
           l_input = $(this);
           function die() { 
-            l_input.unbind("blur", die).next("div").remove(); 
+            $(l_maindiv).remove();
+            l_input.unbind("blur", die).css("background", "green"); 
             l_input.one("focus", display);
           }
-          l_maindiv = $(this).after("<div></div>").next("div")
+          l_maindiv = l_input.after("<div></div>").next("div")
               .css({'display':'inline', 'position':'absolute', 'z-index':'1', 'background':'white', 'padding':'2px'})
               .blur(function(){ 
                 die();
               })
-              .hover(function(){ 
-                  l_input.unbind('blur', die); 
-                }, function(){ 
-                  l_input.bind('blur', die);
-                }
-              )
-              /*.mouseleave(function(){ 
-                l_input.bind("blur", die);
-              })
               .mouseenter(function(){ 
-                l_input.unbind("blur", die); 
-              })*/
+                l_input.unbind("blur", die).css("background", "green"); 
+              })
+              .mouseleave(function(){ 
+                l_input.bind("blur", die).css("background", "red");
+              })
               .get(0);
-          l_input.bind("blur", die);
+          l_input.bind("blur", die).css("background", "red");
           // main display functions
           function do_from_time(s, p) {
             var a, i;
@@ -220,6 +238,16 @@
               });
             });
           }
+          function do_from_day(s, p) {
+            var a, i;
+            a = [];
+            for (i=p.min_day; i<=p.max_day; i++) { a.push(new Day(p, i)); }
+            if ((l_type==="datetime") || (l_type==="datetime-local")) {
+              do_elements.call(s, a, do_from_time);
+            } else {
+              do_elements.call(s, a, function(s, p){ do_elements.call(s, [], function(){}) });
+            }
+          }
           function do_from_year(s, p) {
             var a, i;
             a = [];
@@ -227,21 +255,23 @@
             do_elements.call(s, a, function(s, p){
               var a, i;
               a = [];
-              for (i=1; i<=12; i++) { a.push(new Month(p, i)); }
+              for (i=((p.year===l_min_year)?l_min_month:1); i<=((p.year===l_max_year)?l_max_month:12); i++) { a.push(new Month(p, i)); }
               do_elements.call(s, a, function(s, p){
-                var d;
+                var a, i, d, l_this_month_min, l_this_month_max;
                 d = (new Date());
                 d.setFullYear(p.year.year, p.month, 0);
-                do_elements.call(s, [new Daygroup(p, 1, 5), new Daygroup(p, 6, 10), new Daygroup(p, 11, 15), new Daygroup(p, 16, 20), new Daygroup(p, 21, 25), new Daygroup(p, 26, d.getDate())], function(s, p){
-                  var a, i;
+                l_this_month_min = ((p.year.year===l_min_year)&&(p.month===l_min_month))?l_min_day:1;
+                l_this_month_max = ((p.year.year===l_max_year)&&(p.month===l_max_month))?l_max_day:d.getDate();
+                if((l_this_month_max-l_this_month_min)<=12){
+                  do_from_day(s, new Daygroup(p, l_this_month_min, l_this_month_max));
+                } else {
                   a = [];
-                  for (i=p.min_day; i<=p.max_day; i++) { a.push(new Day(p, i)); }
-                  if ((l_type==="datetime") || (l_type==="datetime-local")) {
-                    do_elements.call(s, a, do_from_time);
-                  } else {
-                    do_elements.call(s, a, function(s, p){ do_elements.call(s, [], function(){}) });
-                  }
-                });
+                  a.push(new Daygroup(p, l_this_month_min, Math.floor(l_this_month_min/10)*10+9));
+                  for (i=Math.floor(l_this_month_min/10)*10+10; i<=l_this_month_max; i+=10) { a.push(new Daygroup(p, i, Math.min(l_this_month_max, i+9))); }
+                  do_elements.call(s, a, function(s, p){
+                    do_from_day(s, p);
+                  });
+                }
               });
             });
           }

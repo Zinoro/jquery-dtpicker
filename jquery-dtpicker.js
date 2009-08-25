@@ -12,7 +12,7 @@
     dtpicker:function(){
       return this.each(function() {
         var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade, l_min_month, l_max_month, l_min_day, l_max_day;
-        if (this.tagName !== "INPUT") { throw "not an input element" }
+        if (this.tagName !== "INPUT") { throw "not an input element"; }
         l_type = this.getAttribute("type");
         if ((l_type !== "date") && (l_type !== "datetime") && (l_type !== "datetime-local") && (l_type !== "time")) { return; }
         l_min = this.getAttribute("min");
@@ -146,8 +146,8 @@
               }
             }
             m = 12;
-            if(o>0) { m -= 1 }
-            if(o+m<a.length) { m -= 1 }
+            if(o>0) { m -= 1; }
+            if(o+m<a.length) { m -= 1; }
             if(this===l_maindiv) {
               $(this).children().remove();
               d = $(this).append("<div></div>").children("div").css({'float':'left', 'background':'#F2F2F2', 'padding':'0px', 'margin':'1px'});
@@ -198,7 +198,7 @@
             $(l_maindiv).remove();
             l_input.unbind("blur", die); 
             l_input.one("focus", display);
-          }
+          }	
           l_maindiv = l_input.after("<div></div>").next("div")
               .css({'display':'inline', 'position':'absolute', 'float':'left', 'z-index':'1', 'background':'white', 'padding':'2px'})
               .blur(function(){ 
@@ -237,7 +237,7 @@
             if ((l_type==="datetime") || (l_type==="datetime-local")) {
               do_elements.call(s, a, do_from_time);
             } else {
-              do_elements.call(s, a, function(s, p){ do_elements.call(s, [], function(){}) });
+              do_elements.call(s, a, function(s, p){ do_elements.call(s, [], function(){}); });
             }
           }
           function do_from_year(s, p) {
@@ -287,4 +287,4 @@
       });
     } 
   });
-})();
+}());

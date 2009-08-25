@@ -18,8 +18,8 @@
         l_min = this.getAttribute("min");
         l_max = this.getAttribute("max");
         l_this_year = (new Date()).getFullYear();
-        l_min_year = (l_min===null)?1900:Number(l_min.slice(0,4));
-        l_max_year = (l_max===null)?2100:Number(l_max.slice(0,4));
+        l_min_year = (l_min===null)?1000:Number(l_min.slice(0,4));
+        l_max_year = (l_max===null)?3000:Number(l_max.slice(0,4));
         l_min_decade = Math.floor(l_min_year/10);
         l_max_decade = Math.floor(l_max_year/10);
         function display() {
@@ -119,7 +119,7 @@
             }
           }
           Minute.prototype.toString = function() { return ("0"+this.minute).slice(-2); };
-          //
+          // element populator
           function do_elements(a, f, o){
             var d, i, s, m;
             s = this;
@@ -137,7 +137,7 @@
             m = 12;
             if(o>0) { m -= 1 }
             if(o+m<a.length) { m -= 1 }
-            if($(this).css("position")==="absolute") {
+            if(this===l_maindiv) {
               $(this).children().remove();
               d = $(this).append("<div></div>").children("div").css({'float':'left', 'background':'#F2F2F2', 'padding':'0px', 'margin':'1px'});
             } else {
@@ -149,27 +149,35 @@
             if (o>0) {
               d.append("<div>&uarr;</div>").children("div:last-child")
                   .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px', 'text-align':'center'})
-                  .click(function(){
+                  .click(function(event){
+                    event.stopPropagation();
                     l_input.focus();
                     do_elements.call(s, a, f, Math.max(0, o-9));
                   });
             }
             for (i=o; i<o+Math.min(a.length, m); i++){ 
               (function(e){
-                d.append("<div>" + e + "</div>").children("div:last-child")
+                d.append("<div><label>" + e + "</label></div>").children("div:last-child")
                     .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px'})
-                    .mouseenter(function(){ f(this, e); })
-                    .click(function(){ 
-                      $(this).parent().parent().prev().val(e.output).next("div").remove();
+                    .click(function(event){ 
+                      event.stopPropagation();
+                      l_input.val(e.output);
+                      l_input.one("focus", display);
+                      $(l_maindiv).remove();
+                    })
+                    .mouseenter(function(event){ 
+                      event.stopPropagation();
+                      f(this, e); 
                     });
               }(a[i]));
             }
             if (a.length>o+m) {
               d.append("<div>&darr;</div>").children("div:last-child")
                   .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px', 'text-align':'center'})
-                  .click(function(){ 
+                  .click(function(event){ 
                     l_input.focus();
                     do_elements.call(s, a, f, Math.min(a.length-11, o+9));
+                    event.stopPropagation();
                   });
             }
           } 
@@ -198,7 +206,7 @@
               })*/
               .get(0);
           l_input.bind("blur", die);
-          //
+          // main display functions
           function do_from_time(s, p) {
             var a, i;
             a = [];
@@ -212,7 +220,6 @@
               });
             });
           }
-          //
           function do_from_year(s, p) {
             var a, i;
             a = [];
@@ -238,13 +245,12 @@
               });
             });
           }
-          //
           function do_from_yeargroup() {
             a = [];
             for (i=l_min_decade; i<=l_max_decade; i++) { a.push(new Yeargroup(i*10, i*10+9)); }
             do_elements.call(l_maindiv, a, do_from_year);
           }
-          //
+          // entry point
           if (l_type==="time") {
             do_from_time(l_maindiv);
           } else {
@@ -255,7 +261,6 @@
             }
           }
         }
-        //
         $(this).one("focus", display);
       });
     } 

@@ -157,15 +157,9 @@
               $(this).parent().nextAll("div").remove();
               d = $(this).parent().after("<div></div>").next("div").css({'float':'left', 'background':'#F2F2F2', 'padding':'0px', 'margin':'1px'});
             }
-            d.mouseenter(function(){ 
-              l_input.unbind("blur", die).css("background", "green"); 
-            });
             if (o>0) {
               d.append("<div><label>&uarr;</label></div>").children("div:last-child")
                   .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px', 'text-align':'center'})
-                  .mouseenter(function(){ 
-                    l_input.unbind("blur", die).css("background", "green"); 
-                  })
                   .click(function(event){
                     event.stopPropagation();
                     l_input.focus();
@@ -176,9 +170,6 @@
               (function(e){
                 d.append("<div><label>" + e + "</label></div>").children("div:last-child")
                     .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px'})
-                    .mouseenter(function(){ 
-                      l_input.unbind("blur", die).css("background", "green"); 
-                    })
                     .click(function(event){ 
                       event.stopPropagation();
                       l_input.val(e.output);
@@ -188,15 +179,12 @@
                     .mouseenter(function(event){ 
                       event.stopPropagation();
                       f(this, e); 
-                    }).children().mouseenter(function(){ l_input.unbind("blur", die).css("background", "green"); });
+                    });
               }(a[i]));
             }
             if (a.length>o+m) {
               d.append("<div><label>&darr;</label></div>").children("div:last-child")
                   .css({'border':'1px solid #E2E2E2', 'background':'#E2E2E2', 'padding':'3px', 'margin':'2px', 'text-align':'center'})
-                  .mouseenter(function(){ 
-                    l_input.unbind("blur", die).css("background", "green"); 
-                  })
                   .click(function(event){ 
                     event.stopPropagation();
                     l_input.focus();
@@ -208,22 +196,26 @@
           l_input = $(this);
           function die() { 
             $(l_maindiv).remove();
-            l_input.unbind("blur", die).css("background", "green"); 
+            l_input.unbind("blur", die); 
             l_input.one("focus", display);
           }
           l_maindiv = l_input.after("<div></div>").next("div")
-              .css({'display':'inline', 'position':'absolute', 'z-index':'1', 'background':'white', 'padding':'2px'})
+              .css({'display':'inline', 'position':'absolute', 'float':'left', 'z-index':'1', 'background':'white', 'padding':'2px'})
               .blur(function(){ 
                 die();
               })
-              .mouseenter(function(){ 
-                l_input.unbind("blur", die).css("background", "green"); 
+              .mouseover(function(){ 
+                l_input.unbind("blur", die); 
               })
-              .mouseleave(function(){ 
-                l_input.bind("blur", die).css("background", "red");
+              .mouseout(function(event){ 
+                if((event.pageX<=$(this).offset().left)||(event.pageY<=$(this).offset().top)||
+                   (event.pageX>=($(this).offset().left+$(this).outerWidth(true)))||
+                   (event.pageY>=($(this).offset().top+$(this).outerHeight(true)))) {
+                  l_input.bind("blur", die);
+                }
               })
               .get(0);
-          l_input.bind("blur", die).css("background", "red");
+          l_input.bind("blur", die);
           // main display functions
           function do_from_time(s, p) {
             var a, i;

@@ -13,12 +13,14 @@
   $.fn.extend({
     dtpicker:function(){
       return this.each(function() {
-        var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade, l_min_month, l_max_month, l_min_day, l_max_day;
-        if (this.tagName !== "INPUT") { throw "not an input element"; }
+        var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade, l_min_month, l_max_month, l_min_day, l_max_day, 
+            l_min_hour, l_max_hour, l_min_minute, l_max_minute, l_time_start_position;
+        if (this.tagName!=="INPUT") { throw "not an input element"; }
         l_type = this.getAttribute("type");
-        if ((l_type !== "date") && (l_type !== "datetime") && (l_type !== "datetime-local") && (l_type !== "time")) { return; }
+        if ((l_type!== "date")&&(l_type!=="datetime")&&(l_type!=="datetime-local")&&(l_type!=="time")) { return; }
         l_min = this.getAttribute("min");
         l_max = this.getAttribute("max");
+        l_time_start_position = (l_type==="time")?0:11;
         l_this_year = (new Date()).getFullYear();
         l_min_year = (l_min===null)?1000:Number(l_min.slice(0,4));
         l_max_year = (l_max===null)?3000:Number(l_max.slice(0,4));
@@ -28,6 +30,10 @@
         l_max_month = (l_max===null)?12:Number(l_max.slice(5,7));
         l_min_day = (l_min===null)?1:Number(l_min.slice(8,10));
         l_max_day = (l_max===null)?31:Number(l_max.slice(8,10));
+        l_min_hour = (l_min===null)?0:Number(l_min.slice(l_time_start_position,l_time_start_position+2));
+        l_max_hour = (l_max===null)?23:Number(l_max.slice(l_time_start_position,l_time_start_position+2));
+        l_min_minute = (l_min===null)?0:(Math.ceil(Number(l_min.slice(l_time_start_position+3,l_time_start_position+5))/5)*5);
+        l_max_minute = (l_max===null)?55:(Math.floor(Number(l_max.slice(l_time_start_position+3,l_time_start_position+5))/5)*5);
         function display() {
           var l_input, l_maindiv, a, i;
           // helper classes
@@ -204,7 +210,7 @@
               d.children("div:last-child").mouseenter();
             }
           } 
-          // initialise (create main div and handle destruction conditions)
+          // initialise (create main div and handle destruction)
           l_input = $(this);
           function die() { 
             $(l_maindiv).remove();
@@ -230,13 +236,17 @@
           l_input.bind("blur", die);
           // main display functions
           function do_from_time(s, p) {
-            var a, i;
+            var a, i, l_this_min, l_this_max;
+            l_this_min = ((p===undefined)||((p.month.year.year===l_min_year)&&(p.month.month===l_min_month)&&(p.day===l_min_day)))?l_min_hour:0;
+            l_this_max = ((p===undefined)||((p.month.year.year===l_max_year)&&(p.month.month===l_max_month)&&(p.day===l_max_day)))?l_max_hour:23;
             a = [];
-            for (i=0; i<=23; i++) { a.push(new Hour(p, i)); }
+            for (i=l_this_min; i<=l_this_max; i++) { a.push(new Hour(p, i)); }
             do_elements.call(s, a, function(s, p){
-              var a, i;
+              var a, i, l_this_min, l_this_max;
+              l_this_min = (((p.day===undefined)||((p.day.month.year.year===l_min_year)&&(p.day.month.month===l_min_month)&&(p.day.day===l_min_day)))&&(p.hour===l_min_hour))?l_min_minute:0;
+              l_this_max = (((p.day===undefined)||((p.day.month.year.year===l_max_year)&&(p.day.month.month===l_max_month)&&(p.day.day===l_max_day)))&&(p.hour===l_max_hour))?l_max_minute:55;
               a = [];
-              for (i=0; i<60; i+=5) { a.push(new Minute(p, i)); }
+              for (i=l_this_min; i<=l_this_max; i+=5) { a.push(new Minute(p, i)); }
               do_elements.call(s, a, function(s, p){
                 do_elements.call(s, [], function(){});
               });
@@ -245,7 +255,7 @@
           function do_from_day(s, p) {
             var a, i;
             a = [];
-            for (i=p.min_day; i<=p.max_day; i++) { a.push(new Day(p, i)); }
+            for (i=p.min_day; i<=p.max_day; i++) { a.push(new Day(p.month, i)); }
             if ((l_type==="datetime") || (l_type==="datetime-local")) {
               do_elements.call(s, a, do_from_time);
             } else {

@@ -5,6 +5,8 @@
  * Copyright (c) 2009 Jack Douglas
  * Released under the MIT license
  * http://www.opensource.net/licenses/mit-license.html
+ *
+ * Version 1.0a2+
  */
 (function(){
   "use strict";

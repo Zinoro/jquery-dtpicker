@@ -191,6 +191,9 @@
                     do_elements.call(s, a, f, Math.min(a.length-11, o+10));
                   });
             }
+            if (a.length===1) {
+              d.children("div:last-child").mouseenter();
+            }
           } 
           // initialise (create main div and handle destruction conditions)
           l_input = $(this);

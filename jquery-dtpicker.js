@@ -143,6 +143,13 @@
                     break;
                   }
                 }
+              } else if (a[0] instanceof Hour) {
+                for (i=0; i<a.length; i++){ 
+                  if(a[i].hour===8) {
+                    o = Math.max(0, Math.min(i, a.length-11));
+                    break;
+                  }
+                }
               }
             }
             m = 12;
@@ -223,7 +230,7 @@
           function do_from_time(s, p) {
             var a, i;
             a = [];
-            for (i=9; i<=18; i++) { a.push(new Hour(p, i)); }
+            for (i=0; i<=23; i++) { a.push(new Hour(p, i)); }
             do_elements.call(s, a, function(s, p){
               var a, i;
               a = [];

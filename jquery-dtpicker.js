@@ -6,7 +6,7 @@
  * Released under the MIT license
  * http://www.opensource.net/licenses/mit-license.html
  *
- * Version 1.0a2+
+ * Version 1.0a3
  */
 (function(){
   "use strict";
@@ -35,7 +35,7 @@
         l_min_minute = (l_min===null)?0:(Math.ceil(Number(l_min.slice(l_time_start_position+3,l_time_start_position+5))/5)*5);
         l_max_minute = (l_max===null)?55:(Math.floor(Number(l_max.slice(l_time_start_position+3,l_time_start_position+5))/5)*5);
         function display() {
-          var l_input, l_maindiv, a, i;
+          var l_input, l_maindiv;
           // helper classes
           function Timezonehour(p_hour) { 
             if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 

@@ -169,6 +169,7 @@
                       l_input.val(e.output);
                       l_input.one("focus", display);
                       $(l_maindiv).remove();
+                      l_input.trigger("change");
                     })
                     .mouseenter(function(event){ 
                       event.stopPropagation();

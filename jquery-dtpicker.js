@@ -6,7 +6,7 @@
  * Released under the MIT license
  * http://www.opensource.net/licenses/mit-license.html
  *
- * Version 1.0a3+
+ * Version 1.0a4
  */
 (function(){
   "use strict";
@@ -57,14 +57,13 @@
             this.timezone = p_timezone; 
             this.min_year = p_min_year; 
             this.max_year = p_max_year; 
-            this.output = p_min_year+"-01-01"+((l_type.slice(0, 7)==="datetime")?"T00:00":"")+((l_type==="datetime")?p_timezone.part:"");
           }
           Yeargroup.prototype.toString = function() { return this.min_year + "s"; };
           function Year(p_timezone, n) { 
             if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
             this.timezone = p_timezone; 
             this.year = n; 
-            this.output = this.year+"-01-01"+((l_type.slice(0, 7)==="datetime")?"T00:00":"")+((l_type==="datetime")?p_timezone.part:"");
+            this.output = this.year+"-01-01"+((l_type.slice(0, 8)==="datetime")?"T00:00":"")+((l_type==="datetime")?p_timezone.part:"");
           }
           Year.prototype.toString = function() { return this.year+""; };
           function Month(y, m) { 
@@ -72,7 +71,7 @@
             this.year = y; 
             this.month = m; 
             this.part = y.year+"-"+("0"+this.month).slice(-2);
-            this.output = this.part+"-01"+((l_type.slice(0, 7)==="datetime")?"T00:00":"")+((l_type==="datetime")?y.timezone.part:"");
+            this.output = this.part+"-01"+((l_type.slice(0, 8)==="datetime")?"T00:00":"")+((l_type==="datetime")?y.timezone.part:"");
           }
           Month.prototype.toString = function() { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][this.month - 1]; };
           function Daygroup(p_month, p_min_day, p_max_day) { 
@@ -81,17 +80,16 @@
             this.min_day = p_min_day; 
             this.max_day = p_max_day; 
             this.part = this.month.part;
-            this.output = this.month.output;
           }
-          Daygroup.prototype.toString = function() { return this.min_day + "-" + this.max_day; };
+          Daygroup.prototype.toString = function() { return ("0"+this.min_day).slice(-2) + "-<br>" + ("0"+this.max_day).slice(-2); };
           function Day(p_month, p_day) { 
             if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
             this.month = p_month; 
             this.day = p_day; 
             this.part = this.month.part+"-"+("0"+this.day).slice(-2);
-            this.output = this.part+((l_type.slice(0, 7)==="datetime")?"T00:00":"")+((l_type==="datetime")?p_month.year.timezone.part:"");
+            this.output = this.part+((l_type.slice(0, 8)==="datetime")?"T00:00":"")+((l_type==="datetime")?p_month.year.timezone.part:"");
           }
-          Day.prototype.toString = function() { return this.day; };
+          Day.prototype.toString = function() { return ("0"+this.day).slice(-2); };
           function Hour(p_day, p_hour) { 
             if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
             this.day = p_day; 
@@ -144,12 +142,12 @@
             if(o+m<a.length) { m -= 1; }
             if(this===l_maindiv) {
               $(this).children().remove();
-              d = $(this).append("<div></div>").children("div").css({"float":"left", "background":"#F2F2F2", "padding":"0px", "margin":"1px"});
+              d = $(this).append("<div></div>").children("div").css({"float":"left", "background":"white", "padding":"1px"})
+                         .append("<div></div>").children("div").css({"float":"left", "background":"#F2F2F2"});
             } else {
-              $(this).parent().children("div").css("border", "1px solid #E2E2E2");
-              $(this).css("border", "1px solid black");
-              $(this).parent().nextAll("div").remove();
-              d = $(this).parent().after("<div></div>").next("div").css({"float":"left", "background":"#F2F2F2", "padding":"0px", "margin":"1px"});
+              $(this).parent().parent().nextAll("div").remove();
+              d = $(this).parent().parent().after("<div></div>").next("div").css({"float":"left", "background":"white", "padding":"1px"})
+                         .append("<div></div>").children("div").css({"float":"left", "background":"#F2F2F2"});
             }
             if (o>0) {
               d.append("<div><label>&uarr;</label></div>").children("div:last-child")
@@ -166,13 +164,21 @@
                     .css({"border":"1px solid #E2E2E2", "background":"#E2E2E2", "padding":"3px", "margin":"2px"})
                     .click(function(event){ 
                       event.stopPropagation();
-                      l_input.val(e.output);
-                      l_input.one("focus", display);
-                      $(l_maindiv).remove();
-                      l_input.trigger("change");
+                      if(e.output!==undefined) {
+                        l_input.val(e.output);
+                        $(l_maindiv).remove();
+                        l_input.one("focus", display);
+                        l_input.trigger("change");
+                      } else {
+                        l_input.focus();
+                      }
                     })
                     .mouseenter(function(event){ 
                       event.stopPropagation();
+                      if(e.output!==undefined) {
+                        $(this).parent().children("div").css("border", "1px solid #E2E2E2");
+                        $(this).css("border", "1px solid black");
+                      }
                       f(this, e); 
                     });
               }(a[i]));
@@ -198,7 +204,7 @@
             l_input.one("focus", display);
           }	
           l_maindiv = l_input.after("<div></div>").next("div")
-              .css({"display":"inline", "position":"absolute", "float":"left", "z-index":"1", "background":"white", "padding":"2px"})
+              .css({"display":"inline", "position":"absolute", "float":"left", "z-index":"1"})
               .blur(function(){ 
                 die();
               })
@@ -211,6 +217,9 @@
                    (event.pageY>=($(this).offset().top+$(this).outerHeight(true)))) {
                   l_input.bind("blur", die);
                 }
+              })
+              .click(function(){
+                l_input.focus();
               })
               .get(0);
           l_input.bind("blur", die);
@@ -227,7 +236,7 @@
               l_this_max = (((p.day===undefined)||((p.day.month.year.year===l_max_year)&&(p.day.month.month===l_max_month)&&(p.day.day===l_max_day)))&&(p.hour===l_max_hour))?l_max_minute:55;
               a = [];
               for (i=l_this_min; i<=l_this_max; i+=5) { a.push(new Minute(p, i)); }
-              do_elements.call(s, a, function(s, p){ do_elements.call(s, [], function(){}); });
+              do_elements.call(s, a, function(){});
             });
           }
           function do_from_day(s, p) {
@@ -237,7 +246,7 @@
             if ((l_type==="datetime") || (l_type==="datetime-local")) {
               do_elements.call(s, a, do_from_time);
             } else {
-              do_elements.call(s, a, function(s, p){ do_elements.call(s, [], function(){}); });
+              do_elements.call(s, a, function(){});
             }
           }
           function do_from_year(s, p) {
@@ -258,8 +267,9 @@
                   do_from_day(s, new Daygroup(p, l_this_month_min, l_this_month_max));
                 } else {
                   a = [];
-                  a.push(new Daygroup(p, l_this_month_min, Math.floor(l_this_month_min/10)*10+9));
-                  for (i=Math.floor(l_this_month_min/10)*10+10; i<=l_this_month_max; i+=10) { a.push(new Daygroup(p, i, Math.min(l_this_month_max, i+9))); }
+                  if(l_this_month_min<10){ a.push(new Daygroup(p, l_this_month_min, 9)); }
+                  a.push(new Daygroup(p, Math.max(10, l_this_month_min), Math.min(l_this_month_max, 19))); 
+                  if(l_this_month_max>19){ a.push(new Daygroup(p, 20, l_this_month_max)); }
                   do_elements.call(s, a, function(s, p){
                     do_from_day(s, p);
                   });

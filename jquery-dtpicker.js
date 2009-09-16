@@ -14,7 +14,7 @@
     dtpicker:function(){
       return this.each(function() {
         var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade, l_min_month, l_max_month, l_min_day, l_max_day, 
-            l_min_hour, l_max_hour, l_min_minute, l_max_minute, l_time_start_position;
+            l_min_hour, l_max_hour, l_min_minute, l_max_minute, l_time_start_position, l_this_year;
         if (this.tagName!=="INPUT") { throw "not an input element"; }
         l_type = this.getAttribute("type");
         if ((l_type!== "date")&&(l_type!=="datetime")&&(l_type!=="datetime-local")&&(l_type!=="time")) { return; }
@@ -258,7 +258,7 @@
               a = [];
               for (i=((p.year===l_min_year)?l_min_month:1); i<=((p.year===l_max_year)?l_max_month:12); i++) { a.push(new Month(p, i)); }
               do_elements.call(s, a, function(s, p){
-                var a, i, d, l_this_month_min, l_this_month_max;
+                var a, d, l_this_month_min, l_this_month_max;
                 d = (new Date());
                 d.setFullYear(p.year.year, p.month, 0);
                 l_this_month_min = ((p.year.year===l_min_year)&&(p.month===l_min_month))?l_min_day:1;

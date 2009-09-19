@@ -6,314 +6,440 @@
  * Released under the MIT license
  * http://www.opensource.net/licenses/mit-license.html
  *
- * Version 1.0a4
+ * Version 1.0a4+
  */
-(function(){
+(function($){
   "use strict";
-  $.fn.extend({
-    dtpicker:function(){
-      return this.each(function() {
-        var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade, l_min_month, l_max_month, l_min_day, l_max_day, 
-            l_min_hour, l_max_hour, l_min_minute, l_max_minute, l_time_start_position, l_this_year;
-        if (this.tagName!=="INPUT") { throw "not an input element"; }
-        l_type = this.getAttribute("type");
-        if ((l_type!== "date")&&(l_type!=="datetime")&&(l_type!=="datetime-local")&&(l_type!=="time")) { return; }
-        l_min = this.getAttribute("min");
-        l_max = this.getAttribute("max");
-        l_time_start_position = (l_type==="time")?0:11;
-        l_this_year = (new Date()).getFullYear();
-        l_min_year = (l_min===null)?1000:Number(l_min.slice(0,4));
-        l_max_year = (l_max===null)?3000:Number(l_max.slice(0,4));
-        l_min_decade = Math.floor(l_min_year/10);
-        l_max_decade = Math.floor(l_max_year/10);
-        l_min_month = (l_min===null)?1:Number(l_min.slice(5,7));
-        l_max_month = (l_max===null)?12:Number(l_max.slice(5,7));
-        l_min_day = (l_min===null)?1:Number(l_min.slice(8,10));
-        l_max_day = (l_max===null)?31:Number(l_max.slice(8,10));
-        l_min_hour = (l_min===null)?0:Number(l_min.slice(l_time_start_position,l_time_start_position+2));
-        l_max_hour = (l_max===null)?23:Number(l_max.slice(l_time_start_position,l_time_start_position+2));
-        l_min_minute = (l_min===null)?0:(Math.ceil(Number(l_min.slice(l_time_start_position+3,l_time_start_position+5))/5)*5);
-        l_max_minute = (l_max===null)?55:(Math.floor(Number(l_max.slice(l_time_start_position+3,l_time_start_position+5))/5)*5);
-        function display() {
-          var l_input, l_maindiv;
-          // helper classes
-          function Timezonehour(p_hour) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.hour = p_hour; 
-            this.output = "";
+  var l_stylesdone, l_month_days;
+  l_stylesdone = false;
+  l_month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  $.fn.dtpicker = function(options){
+    var l_options, l_options_css, l_options_css_container, l_options_css_container_classname, l_options_css_sectionouter, l_options_css_sectionouter_classname, 
+        l_options_css_sectioninner, l_options_css_sectioninner_classname, l_options_css_element, l_options_css_element_classname, 
+        l_options_css_selected, l_options_css_selected_classname, l_options_css_squeeze, l_options_css_squeeze_styles, l_options_css_squeeze_classname, 
+        l_options_css_squeeze_classnames, l_options_size, l_options_months, l_options_timezones, i, s;
+    l_options = $.extend({}, $.fn.dtpicker.defaults, options);
+    l_options_timezones = l_options.timezones;
+    l_options_months = l_options.months;
+    l_options_size = l_options.size();
+    l_options_css = l_options.css;
+    l_options_css_container = l_options_css.container;
+    l_options_css_container_classname = l_options_css_container.classname;
+    l_options_css_sectionouter = l_options_css.sectionouter;
+    l_options_css_sectionouter_classname = l_options_css_sectionouter.classname;
+    l_options_css_sectioninner = l_options_css.sectioninner;
+    l_options_css_sectioninner_classname = l_options_css_sectioninner.classname;
+    l_options_css_element = l_options_css.element;
+    l_options_css_element_classname = l_options_css_element.classname;
+    l_options_css_selected = l_options_css.selected;
+    l_options_css_selected_classname = l_options_css_selected.classname;
+    l_options_css_squeeze = l_options_css.squeeze;
+    l_options_css_squeeze_styles = l_options_css_squeeze.styles; 
+    l_options_css_squeeze_classname = l_options_css_squeeze.classname;
+    l_options_css_squeeze_classnames = l_options_css_squeeze_classname+"0";
+    for(i=1; i<l_options_css_squeeze_styles.length; i++){
+      l_options_css_squeeze_classnames += " "+l_options_css_squeeze_classname+i;
+    }
+    if(l_stylesdone===false){
+      s = "<style type='text/css'>";
+      s += "." + l_options_css_container_classname + " { " + l_options_css_container.style + " } ";
+      s += "." + l_options_css_sectionouter_classname + " { " + l_options_css_sectionouter.style + " } ";
+      s += "." + l_options_css_sectioninner_classname + " { " + l_options_css_sectioninner.style + " } ";
+      s += "." + l_options_css_element_classname + " { " + l_options_css_element.style + " } ";
+      s += "." + l_options_css_selected_classname + " { " + l_options_css_selected.style + " } ";
+      s += "." + l_options_css_squeeze_classname + " { " + l_options_css_squeeze.style + " } ";
+      for(i = 0; i<l_options_css_squeeze_styles.length; i++){
+        s += "." + l_options_css_squeeze_classname + i + " { " + l_options_css_squeeze_styles[i] + " } ";
+      }
+      s += "</style>"; 
+      $("head").append(s);
+      l_stylesdone = true;
+    }
+    return this.each(function() {
+      var l_type, l_min, l_max, l_min_year, l_max_year, l_min_decade, l_max_decade, l_min_month, l_max_month, l_min_day, l_max_day, 
+          l_min_hour, l_max_hour, l_min_minute, l_max_minute, l_time_start_position, l_this_decade, l_this_year;
+      if (this.tagName!=="INPUT") { throw "not an input element"; }
+      l_type = this.getAttribute("type");
+      if ((l_type!== "date")&&(l_type!=="datetime")&&(l_type!=="datetime-local")&&(l_type!=="time")) { return; }
+      l_min = this.getAttribute("min");
+      l_max = this.getAttribute("max");
+      l_time_start_position = (l_type==="time")?0:11;
+      l_this_year = (new Date()).getFullYear();
+      l_this_decade = Math.floor(l_this_year/10);
+      l_min_year = (l_min===null)?1000:+l_min.slice(0,4);
+      l_max_year = (l_max===null)?3000:+l_max.slice(0,4);
+      l_min_decade = Math.floor(l_min_year/10);
+      l_max_decade = Math.floor(l_max_year/10);
+      l_min_month = (l_min===null)?1:+l_min.slice(5,7);
+      l_max_month = (l_max===null)?12:+l_max.slice(5,7);
+      l_min_day = (l_min===null)?1:+l_min.slice(8,10);
+      l_max_day = (l_max===null)?31:+l_max.slice(8,10);
+      l_min_hour = (l_min===null)?0:+l_min.slice(l_time_start_position,l_time_start_position+2);
+      l_max_hour = (l_max===null)?23:+l_max.slice(l_time_start_position,l_time_start_position+2);
+      l_min_minute = (l_min===null)?0:(Math.ceil(+l_min.slice(l_time_start_position+3,l_time_start_position+5)/5)*5);
+      l_max_minute = (l_max===null)?55:(Math.floor(+l_max.slice(l_time_start_position+3,l_time_start_position+5)/5)*5);
+      function display() {
+        var l_input, l_maindiv, e, p;
+        e = (function(){
+          function clone(o){
+            function F(){}
+            F.prototype = o;
+            return new F();
           }
-          Timezonehour.prototype.toString = function() { return "&plusmn;"+("0"+this.hour).slice(-2); };
-          function Timezoneminute(p_hour, p_minute, p_sign) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.hour = p_hour; 
-            this.minute = p_minute; 
-            this.sign = p_sign;
-            this.part = ((p_hour.hour===0)&&(p_minute===0))?"Z":p_sign+("0"+p_hour.hour).slice(-2)+":"+("0"+p_minute).slice(-2);
-            this.output = "";
+          function E() { 
+            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; }
           }
-          Timezoneminute.prototype.toString = function() { return this.sign+("0"+this.hour.hour).slice(-2)+":"+("0"+this.minute).slice(-2); };
-          function Yeargroup(p_timezone, p_min_year, p_max_year) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.timezone = p_timezone; 
-            this.min_year = p_min_year; 
-            this.max_year = p_max_year; 
+          p = E.prototype;
+          function getPad(n){ return ("0"+n).slice(-2); }
+          function getConcat(a, b, n, s){ return (a===null?n:getPad(a)) + s + (b===null?n:getPad(b)); }
+          function getTime(e){ return getConcat(e.h, e.m, "00", ":"); }
+          function getDate(e){ return e.y + "-" + getConcat(e.c, e.d, "01", "-"); }
+          function getDatetime(e){ return getDate(e) + "T" + getTime(e); }
+          function getDatetimeTZ(e){ return getDatetime(e) + e.tz.s + ((e.tz.s==="Z")?"":getConcat(e.tz.h, e.tz.m, "00", ":")); }
+          function getMinutes(e){
+            var a, i, t;
+            a = [];
+            for(i = (e.ismin?l_min_minute:0); i<=(e.ismax?l_max_minute:55); i+=5){
+              t = clone(e);
+              t.m = i;
+              t.text = getPad(t.m); 
+              t.natural = false;
+              a.push(t);
+            }
+            return a;
+          }  
+          function getHours(e){
+            var a, i, t;
+            a = [];
+            for(i = (e.ismin?l_min_hour:0); i<=(e.ismax?l_max_hour:23); i++){
+              t = clone(e);
+              t.h = i;
+              t.text = getPad(t.h)+":"; 
+              if(e.ismin&&(i!==l_min_hour)){ t.ismin = false; }
+              if(e.ismax&&(i!==l_max_hour)){ t.ismax = false; }
+              t.cansel = true;
+              t.hasout = true; 
+              t.natural = (i===8);
+              a.push(t);
+            }
+            return a;
+          }  
+          function getDays(e){
+            var a, i, t;
+            a = [];
+            for(i = e.dg.min; i<=e.dg.max; i++){
+              t = clone(e);
+              t.d = i;
+              t.text = getPad(t.d); 
+              if(e.ismin&&(i!==l_min_day)){ t.ismin = false; }
+              if(e.ismax&&(i!==l_max_day)){ t.ismax = false; }
+              t.cansel = true;
+              t.hasout = true; 
+              t.natural = false;
+              a.push(t);
+            }
+            return a;
+          }  
+          function getDayGroups(e){
+            var a, t, min, max;
+            min = e.ismin?l_min_day:1;
+            max = e.ismin?l_max_day:e.ds;
+            if((max-min)<l_options_size){ 
+              t = clone(e);
+              t.dg = { min: min, max: max };
+              t.natural = false;
+              t.text = null; 
+              return getDays(t); 
+            }
+            a = [];
+            if(min===1){
+              t = clone(e);
+              t.dg = {};
+              t.d = 1;
+              t.text = getPad(t.d); 
+              t.natural = false;
+              a.push(t);
+            }
+            if(min<10){
+              t = clone(e);
+              t.dg = { min: Math.max(2, min), max: 9 };
+              t.natural = false;
+              t.text = getPad(t.dg.min)+"-<br>-"+getPad(t.dg.max); 
+              t.cansel = false;
+              t.hasout = false; 
+              a.push(t);
+            }
+            t = clone(e);
+            t.dg = { min: Math.max(10, min), max: Math.min(max, 19) };
+            t.natural = false;
+            t.text = getPad(t.dg.min)+"-<br>-"+getPad(t.dg.max); 
+            t.cansel = false;
+            t.hasout = false; 
+            a.push(t);
+            if(max>19){
+              t = clone(e);
+              t.dg = { min: 20, max: Math.min(e.ds-1, max) };
+              t.natural = false;
+              t.text = getPad(t.dg.min)+"-<br>-"+getPad(t.dg.max); 
+              t.cansel = false;
+              t.hasout = false; 
+              a.push(t);
+            }
+            if(max===e.ds){
+              t = clone(e);
+              t.dg = {};
+              t.d = e.ds;
+              t.text = getPad(t.d); 
+              t.natural = false;
+              a.push(t);
+            }
+            return a;
+          }  
+          function getMonths(e){
+            var a, i, t;
+            a = [];
+            for(i = (e.ismin?l_min_month:1); i<=(e.ismax?l_max_month:12); i++){
+              t = clone(e);
+              t.c = i;
+              t.ds = l_month_days[i-1]+((t.y%4===0)?(t.y%100===0)?(t.y%400===0)?1:0:1:0);
+              t.text = l_options_months[i-1]; 
+              if(e.ismin&&(i!==l_min_month)){ t.ismin = false; }
+              if(e.ismax&&(i!==l_max_month)){ t.ismax = false; }
+              t.natural = false;
+              a.push(t);
+            }
+            return a;
+          }  
+          function getYears(e){
+            var a, i, t;
+            a = [];
+            for(i = e.yg.min; i<=e.yg.max; i++){
+              t = clone(e);
+              t.y = i;
+              t.text = i.toString();
+              t.cansel = true;
+              t.hasout = true; 
+              if(e.ismin&&(i!==l_min_year)){ t.ismin = false; }
+              if(e.ismax&&(i!==l_max_year)){ t.ismax = false; }
+              t.natural = (i===l_this_year);
+              a.push(t);
+            }
+            return a;
+          }  
+          function getYearGroups(e){
+            var a, i, t;
+            if(((l_max_year-l_min_year)<(l_options_size))||(l_min_decade===l_max_decade)||(l_min_decade>=(l_this_decade-1))){
+              t = clone(e);
+              t.yg = { min: l_min_year, max: l_max_year}; 
+              return getYears(t); 
+            }
+            a = [];
+            for(i = l_max_decade; i>=l_min_decade; i--){
+              t = clone(e);
+              t.yg = { min: Math.max(l_min_year, i*10), max: Math.min(l_max_year, i*10+9) };
+              t.text = i+"0s"; 
+              if(e.ismin&&(i!==l_min_decade)){ t.ismin = false; }
+              if(e.ismax&&(i!==l_max_decade)){ t.ismax = false; }
+              t.natural = (i===l_this_decade);
+              t.cansel = false;
+              a.push(t);
+            }
+            return a;
+          }  
+          function getTZs(e){
+            var a, i, t;
+            a = [];
+            for(i = ((e.tz.h===0)?15:0); i<60; i+=15){
+              t = clone(e);  
+              t.tz = {h: t.tz.h, m: i, s: "-"};
+              t.text = "&minus;"+getPad(t.tz.h)+":"+getPad(i); 
+              t.cansel = true;
+              a.push(t);
+              t = clone(e);  
+              t.tz = {h: t.tz.h, m: i, s: "+"};
+              t.text = "+"+getPad(t.tz.h)+":"+getPad(i); 
+              t.cansel = true;
+              a.push(t);
+            }
+            return a;
           }
-          Yeargroup.prototype.toString = function() { return this.min_year + "s"; };
-          function Year(p_timezone, n) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.timezone = p_timezone; 
-            this.year = n; 
-            this.output = this.year+"-01-01"+((l_type.slice(0, 8)==="datetime")?"T00:00":"")+((l_type==="datetime")?p_timezone.part:"");
+          function getTZGroups(e){
+            var a, i, t, o;
+            a = [];
+            for(i = 0; i<l_options_timezones.length; i++){
+              t = clone(e);
+              o = l_options_timezones[i].offset;
+              t.tz = { h: +o.slice(-2), m: +o.slice(-5, -3), s: o.slice(0, 1) };
+              if(t.tz.s==="0"){ t.tz.s = "Z"; }
+              t.text = l_options_timezones[i].name; 
+              t.natural = (i===0);
+              t.cansel = true;
+              a.push(t);
+            }
+            for(i = 0; i<24; i++){
+              t = clone(e);
+              t.tz = { h: i, m: null };
+              t.text = "&plusmn;"+getPad(i); 
+              t.natural = (a.length===0);
+              a.push(t);
+            }
+            return a;
           }
-          Year.prototype.toString = function() { return this.year+""; };
-          function Month(y, m) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.year = y; 
-            this.month = m; 
-            this.part = y.year+"-"+("0"+this.month).slice(-2);
-            this.output = this.part+"-01"+((l_type.slice(0, 8)==="datetime")?"T00:00":"")+((l_type==="datetime")?y.timezone.part:"");
+          function getChildren(e){
+            if(e.tz===null){ return getTZGroups(e); }
+            if((e.tz!==undefined)&&(e.tz.m===null)){ return getTZs(e); }
+            if(e.yg===null){ return getYearGroups(e); }
+            if(e.y===null){ return getYears(e); }
+            if(e.c===null){ return getMonths(e); }
+            if(e.dg===null){ return getDayGroups(e); }
+            if(e.d===null){ return getDays(e); }
+            if(e.h===null){ return getHours(e); }
+            if(e.m===null){ return getMinutes(e); }
           }
-          Month.prototype.toString = function() { return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][this.month - 1]; };
-          function Daygroup(p_month, p_min_day, p_max_day) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.month = p_month; 
-            this.min_day = p_min_day; 
-            this.max_day = p_max_day; 
-            this.part = this.month.part;
+          if(l_type==="time"){
+            p.getOutput = function(){ return getTime(this); };
+            p.getChildren = function(){ return (this.m===null)?getChildren(this):[]; };
+          } else if (l_type==="date"){
+            p.getOutput = function(){ return (this.y===null)?null:getDate(this); };
+            p.getChildren = function(){ return (this.d===null)?getChildren(this):[]; };
+          } else if (l_type==="datetime-local"){
+            p.getOutput = function(){ return (this.y===null)?null:getDatetime(this); };
+            p.getChildren = function(){ return (this.m===null)?getChildren(this):[]; };
+          } else if (l_type==="datetime"){
+            p.getOutput = function(){ return (this.y===null)?null:getDatetimeTZ(this); };
+            p.getChildren = function(){ return (this.m===null)?getChildren(this):[]; };
           }
-          Daygroup.prototype.toString = function() { return ("0"+this.min_day).slice(-2) + "-<br>" + ("0"+this.max_day).slice(-2); };
-          function Day(p_month, p_day) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.month = p_month; 
-            this.day = p_day; 
-            this.part = this.month.part+"-"+("0"+this.day).slice(-2);
-            this.output = this.part+((l_type.slice(0, 8)==="datetime")?"T00:00":"")+((l_type==="datetime")?p_month.year.timezone.part:"");
+          if(l_type!=="time"){ p.yg = null; p.y = null; p.c = null; p.dg = null; p.d = null; }
+          if(l_type!=="date"){ p.h = null; p.m = null; }
+          if(l_type==="datetime"){ p.tz = null; }
+          p.cansel = false; p.hasout = false; p.ismin = true; p.ismax = true;
+          return (new E()).getChildren();
+        }());
+        function do_elements(o, a, n){
+          var d, m, i, l_current;
+          if(n===undefined){ 
+            n = 0;
+            for(i=0; i<a.length; i++){
+              if(a[i].natural){ n = i; }
+            }
           }
-          Day.prototype.toString = function() { return ("0"+this.day).slice(-2); };
-          function Hour(p_day, p_hour) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.day = p_day; 
-            this.hour = p_hour; 
-            this.part = ((l_type==="time")?"":this.day.part+"T")+("0"+this.hour).slice(-2);
-            this.output = this.part+":00"+((l_type==="datetime")?p_day.month.year.timezone.part:"");
+          n = Math.max(0, Math.min(n, a.length-(l_options_size-1)));
+          if(o===l_maindiv) {
+            $(o).children().remove();
+          } else {
+            $(o).parent().parent().nextAll("div").remove();
           }
-          Hour.prototype.toString = function() { return ("0"+this.hour).slice(-2)+":"; };
-          function Minute(p_hour, p_minute) { 
-            if (!(this instanceof arguments.callee)) { throw "Constructor called as a function"; } 
-            this.hour = p_hour; 
-            this.minute = p_minute; 
-            this.part = this.hour.part+":"+("0"+this.minute).slice(-2);
-            this.output = this.part+((l_type==="datetime")?p_hour.day.month.year.timezone.part:"");
+          d = $(l_maindiv).append("<div></div>").children("div:last-child").addClass(l_options_css_sectionouter_classname)
+                          .append("<div></div>").children().addClass(l_options_css_sectioninner_classname);
+          m = l_options_size;
+          if(n>0){ m -= 1; }
+          if(n+m<a.length){ m -= 1; }
+          if(n>0) {
+            d.append("<div><label>&uarr;</label></div>").children("div:last-child")
+              .addClass(l_options_css_element_classname)
+              .css("text-align", "center")
+              .click(function(event){
+                event.stopPropagation();
+                l_input.focus();
+                do_elements(o, a, n-(l_options_size-l_options_size%10));
+              });
           }
-          Minute.prototype.toString = function() { return ("0"+this.minute).slice(-2); };
-          // element populator
-          function do_elements(a, f, o){
-            var d, i, s, m;
-            s = this;
-            if(o===undefined) { 
-              o = Math.max(0, Math.floor(a.length/2)-6); 
-              if(a[0] instanceof Yeargroup) {
-                for (i=0; i<a.length; i++){ 
-                  if((a[i].min_year<=l_this_year) && (a[i].max_year>=l_this_year)) {
-                    o = Math.max(0, Math.min(i, a.length-11));
-                    break;
-                  }
+          for (i=n; i<n+Math.min(a.length, m); i++){ 
+            (function(e){
+              function size(e){
+                if(l_options.squeeze&&(a.length>12)){
+                  e.parent().children().removeClass(l_options_css_squeeze_classnames);
+                  e.prevAll().each(function(i){ $(this).addClass(l_options_css_squeeze_classname+(Math.min(l_options_css_squeeze_styles.length, i)-1)); });
+                  e.nextAll().each(function(i){ $(this).addClass(l_options_css_squeeze_classname+(Math.min(l_options_css_squeeze_styles.length, i)-1)); });
                 }
-              } else if (a[0] instanceof Year) {
-                for (i=0; i<a.length; i++){ 
-                  if(a[i].year===l_this_year) {
-                    o = Math.max(0, Math.min(i, a.length-11));
-                    break;
-                  }
-                }
-              } else if (a[0] instanceof Hour) {
-                for (i=0; i<a.length; i++){ 
-                  if(a[i].hour===8) {
-                    o = Math.max(0, Math.min(i, a.length-11));
-                    break;
-                  }
-                }
-              } else if (a[0] instanceof Timezonehour) {
-                o = 0;
               }
-            }
-            m = 12;
-            if(o>0) { m -= 1; }
-            if(o+m<a.length) { m -= 1; }
-            if(this===l_maindiv) {
-              $(this).children().remove();
-              d = $(this).append("<div></div>").children("div").css({"float":"left", "background":"white", "padding":"1px"})
-                         .append("<div></div>").children("div").css({"float":"left", "background":"#F2F2F2"});
-            } else {
-              $(this).parent().parent().nextAll("div").remove();
-              d = $(this).parent().parent().after("<div></div>").next("div").css({"float":"left", "background":"white", "padding":"1px"})
-                         .append("<div></div>").children("div").css({"float":"left", "background":"#F2F2F2"});
-            }
-            if (o>0) {
-              d.append("<div><label>&uarr;</label></div>").children("div:last-child")
-                  .css({"border":"1px solid #E2E2E2", "background":"#E2E2E2", "padding":"3px", "margin":"2px", "text-align":"center"})
-                  .click(function(event){
-                    event.stopPropagation();
-                    l_input.focus();
-                    do_elements.call(s, a, f, Math.max(0, o-10));
-                  });
-            }
-            for (i=o; i<o+Math.min(a.length, m); i++){ 
-              (function(e){
-                d.append("<div><label>" + e + "</label></div>").children("div:last-child")
-                    .css({"border":"1px solid #E2E2E2", "background":"#E2E2E2", "padding":"3px", "margin":"2px"})
-                    .click(function(event){ 
-                      event.stopPropagation();
-                      if(e.output!==undefined) {
-                        l_input.val(e.output);
-                        $(l_maindiv).remove();
-                        l_input.one("focus", display);
-                        l_input.trigger("change");
-                      } else {
-                        l_input.focus();
-                      }
-                    })
-                    .mouseenter(function(event){ 
-                      event.stopPropagation();
-                      if(e.output!==undefined) {
-                        $(this).parent().children("div").css("border", "1px solid #E2E2E2");
-                        $(this).css("border", "1px solid black");
-                      }
-                      f(this, e); 
-                    });
-              }(a[i]));
-            }
-            if (a.length>o+m) {
-              d.append("<div><label>&darr;</label></div>").children("div:last-child")
-                  .css({"border":"1px solid #E2E2E2", "background":"#E2E2E2", "padding":"3px", "margin":"2px", "text-align":"center"})
+              d.append("<div><label>" + e.text + "</label></div>").children("div:last-child")
+                  .addClass(l_options_css_element_classname)
+                  .addClass(l_options_css_squeeze_classname)
                   .click(function(event){ 
                     event.stopPropagation();
-                    l_input.focus();
-                    do_elements.call(s, a, f, Math.min(a.length-11, o+10));
+                    if(e.hasout) {
+                      l_input.val(e.getOutput());
+                      $(l_maindiv).remove();
+                      l_input.one("focus", display);
+                      l_input.trigger("change");
+                    } else {
+                      l_input.focus();
+                    }
+                  })
+                  .mouseenter(function(event){
+                    var l_me;
+                    event.stopPropagation();
+                    l_me = this;
+                    l_current = this; 
+                    $(this).parent().children("div").removeClass(l_options_css_selected_classname);
+                    if(e.cansel) {
+                      $(this).addClass(l_options_css_selected_classname);
+                    }
+                    size($(this));
+                    setTimeout(function(){ if(l_me===l_current){ do_elements(l_current, e.getChildren()); } }, 100);
                   });
-            }
-            if (a.length===1) {
-              d.children("div:last-child").mouseenter();
-            }
-          } 
-          // initialise (create main div and handle destruction)
-          l_input = $(this);
-          function die() { 
-            $(l_maindiv).remove();
-            l_input.unbind("blur", die); 
-            l_input.one("focus", display);
-          }	
-          l_maindiv = l_input.after("<div></div>").next("div")
-              .css({"display":"inline", "position":"absolute", "float":"left", "z-index":"1"})
-              .blur(function(){ 
-                die();
-              })
-              .mouseover(function(){ 
-                l_input.unbind("blur", die); 
-              })
-              .mouseout(function(event){ 
-                if((event.pageX<=$(this).offset().left)||(event.pageY<=$(this).offset().top)||
-                   (event.pageX>=($(this).offset().left+$(this).outerWidth(true)))||
-                   (event.pageY>=($(this).offset().top+$(this).outerHeight(true)))) {
-                  l_input.bind("blur", die);
-                }
-              })
-              .click(function(){
+              size(d.children("div:first-child"));
+            }(a[i]));
+          }
+          if (a.length>n+m) {
+            d.append("<div><label>&darr;</label></div>").children("div:last-child")
+              .addClass(l_options_css_element_classname)
+              .css("text-align", "center")
+              .click(function(event){ 
+                event.stopPropagation();
                 l_input.focus();
-              })
-              .get(0);
-          l_input.bind("blur", die);
-          // main display functions
-          function do_from_time(s, p) {
-            var a, i, l_this_min, l_this_max;
-            l_this_min = ((p===undefined)||((p.month.year.year===l_min_year)&&(p.month.month===l_min_month)&&(p.day===l_min_day)))?l_min_hour:0;
-            l_this_max = ((p===undefined)||((p.month.year.year===l_max_year)&&(p.month.month===l_max_month)&&(p.day===l_max_day)))?l_max_hour:23;
-            a = [];
-            for (i=l_this_min; i<=l_this_max; i++) { a.push(new Hour(p, i)); }
-            do_elements.call(s, a, function(s, p){
-              var a, i, l_this_min, l_this_max;
-              l_this_min = (((p.day===undefined)||((p.day.month.year.year===l_min_year)&&(p.day.month.month===l_min_month)&&(p.day.day===l_min_day)))&&(p.hour===l_min_hour))?l_min_minute:0;
-              l_this_max = (((p.day===undefined)||((p.day.month.year.year===l_max_year)&&(p.day.month.month===l_max_month)&&(p.day.day===l_max_day)))&&(p.hour===l_max_hour))?l_max_minute:55;
-              a = [];
-              for (i=l_this_min; i<=l_this_max; i+=5) { a.push(new Minute(p, i)); }
-              do_elements.call(s, a, function(){});
-            });
-          }
-          function do_from_day(s, p) {
-            var a, i;
-            a = [];
-            for (i=p.min_day; i<=p.max_day; i++) { a.push(new Day(p.month, i)); }
-            if ((l_type==="datetime") || (l_type==="datetime-local")) {
-              do_elements.call(s, a, do_from_time);
-            } else {
-              do_elements.call(s, a, function(){});
-            }
-          }
-          function do_from_year(s, p) {
-            var a, i;
-            a = [];
-            for (i=Math.max(l_min_year, p.min_year); i<=Math.min(l_max_year, p.max_year); i++) { a.push(new Year(p.timezone, i)); }
-            do_elements.call(s, a, function(s, p){
-              var a, i;
-              a = [];
-              for (i=((p.year===l_min_year)?l_min_month:1); i<=((p.year===l_max_year)?l_max_month:12); i++) { a.push(new Month(p, i)); }
-              do_elements.call(s, a, function(s, p){
-                var a, d, l_this_month_min, l_this_month_max;
-                d = (new Date());
-                d.setFullYear(p.year.year, p.month, 0);
-                l_this_month_min = ((p.year.year===l_min_year)&&(p.month===l_min_month))?l_min_day:1;
-                l_this_month_max = ((p.year.year===l_max_year)&&(p.month===l_max_month))?l_max_day:d.getDate();
-                if((l_this_month_max-l_this_month_min)<=12){
-                  do_from_day(s, new Daygroup(p, l_this_month_min, l_this_month_max));
-                } else {
-                  a = [];
-                  if(l_this_month_min<10){ a.push(new Daygroup(p, l_this_month_min, 9)); }
-                  a.push(new Daygroup(p, Math.max(10, l_this_month_min), Math.min(l_this_month_max, 19))); 
-                  if(l_this_month_max>19){ a.push(new Daygroup(p, 20, l_this_month_max)); }
-                  do_elements.call(s, a, function(s, p){
-                    do_from_day(s, p);
-                  });
-                }
+                do_elements(o, a, n+(l_options_size-l_options_size%10));
               });
-            });
           }
-          function do_from_yeargroup(s, p) {
-            var a, i;
-            a = [];
-            for (i=l_min_decade; i<=l_max_decade; i++) { a.push(new Yeargroup(p, i*10, i*10+9)); }
-            do_elements.call(s, a, do_from_year);
+          if (a.length===1) {
+            d.children("div:last-child").mouseenter();
           }
-          function do_from_timezone() {
-            var a, i;
-            a = [];
-            for (i=0; i<=23; i++) { a.push(new Timezonehour(i)); }
-            do_elements.call(l_maindiv, a, function(s, p){
-              var a, i;
-              a = [];
-              if(p.hour===0) {
-                a.push(new Timezoneminute(p, 0, ""));
-                for (i=15; i<=45; i+=15) { a.push(new Timezoneminute(p, i, "-")); a.push(new Timezoneminute(p, i, "+")); } 
-              } else {
-                for (i=0; i<=45; i+=15) { a.push(new Timezoneminute(p, i, "-")); a.push(new Timezoneminute(p, i, "+")); } 
+        } 
+        // initialise (create main div and handle destruction)
+        l_input = $(this);
+        function die() { 
+          $(l_maindiv).remove();
+          l_input.unbind("blur", die); 
+          l_input.one("focus", display);
+        }	
+        l_maindiv = l_input.after("<div></div>").next("div")
+            .addClass(l_options_css_container_classname)
+            .blur(function(){ 
+              die();
+            })
+            .mouseover(function(){ 
+              l_input.unbind("blur", die); 
+            })
+            .mouseout(function(event){ 
+              if((event.pageX<=$(this).offset().left)||(event.pageY<=$(this).offset().top)||
+                 (event.pageX>=($(this).offset().left+$(this).outerWidth(true)))||
+                 (event.pageY>=($(this).offset().top+$(this).outerHeight(true)))) {
+                l_input.bind("blur", die);
               }
-              do_elements.call(s, a, do_from_yeargroup);
-            });
-          }
-          // entry point
-          if (l_type==="time") {
-            do_from_time(l_maindiv);
-          } else if(l_type==="datetime") {
-            do_from_timezone();
-          } else {
-            if (l_min_year>=l_this_year-1) {
-              do_from_year(l_maindiv, new Yeargroup(undefined, l_min_year, l_max_year));
-            } else {
-              do_from_yeargroup(l_maindiv);
-            }
-          }
-        }
-        $(this).one("focus", display);
-      });
-    } 
-  });
-}());
+            })
+            .click(function(){
+              l_input.focus();
+            })
+            .get(0);
+        l_input.bind("blur", die);
+        do_elements(l_maindiv, e);
+      }
+      $(this).one("focus", display);
+    });
+  };
+  $.fn.dtpicker.defaults = {
+    squeeze: false,
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    css: { 
+      container: { classname: "jqdtp-m", style: "display:inline; position:absolute; z-index:1;" }, 
+      sectionouter: { classname: "jqdtp-so", style: "float:left; background:white;" }, 
+      sectioninner: { classname: "jqdtp-si", style: "background:#F2F2F2; padding: 1px; margin: 1px;" }, 
+      element: { classname: "jqdtp-e", style: "border:1px solid #E2E2E2; padding:3px; margin:1px;" }, 
+      selected: { classname: "jqdtp-s", style: "border-color: black;" }, 
+      squeeze: { classname: "jqdtp-sq", style: "text-align: center;", styles: ["padding: 1px; font-size: 85%;", "padding: 1px; font-size: 65%;", "padding: 1px; font-size: 50%;", "padding: 1px; font-size: 40%;", "padding: 0px; border-width: 0px; font-size: 30%;"] }
+    },
+    size: function(){ return this.squeeze?32:12; },
+    timezones: [{name: "UTC", offset: "00:00"}, {name: "EDT", offset: "-04:00"}, {name: "EST/CDT", offset: "-05:00"}, {name: "CST/MDT", offset: "-06:00"}, {name: "MST/PDT", offset: "-07:00"}, {name: "PST/AKDT", offset: "-08:00"}, {name: "AKST/HADT", offset: "-09:00"}, {name: "HST/HAST", offset: "-10:00"}]
+  };
+}(jQuery));

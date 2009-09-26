@@ -143,7 +143,7 @@
             a = [];
             min = min||(this.ismin?l_min_day:1);
             max = max||(this.ismax?l_max_day:this.d.ds);
-            if((max-min)<(l_options_squeeze?32:10)){ 
+            if((max-min)<(l_options_squeeze?32:12)){ 
               for(i = min; i<=max; i++){ a.push(getDay(this, i)); }
             } else {
               if(min===1){ a.push(getDay(this, 1)); }
@@ -172,14 +172,6 @@
             for(i = (this.ismin?l_min_month:1); i<=(this.ismax?l_max_month:12); i++){ a.push(getMonth(this, i)); }
             return a;
           }
-          function getYearGroup(parent, start, end){
-            var ret;
-            ret = parent.clone();
-            ret.text = (start-start%10)+"s";
-            ret.natural = ((start<=l_this_year)&&(end>=l_this_year));
-            ret.getChildren = function(){ return getYears.call(parent, start, end); };
-            return ret;
-          }
           function getYear(parent, year){
             var ret;
             ret = parent.clone();
@@ -192,6 +184,15 @@
             ret.hasOutput = function(){ return true; };
             return ret;
           }
+          function getYearGroup(parent, start, end){
+            var ret;
+            if(start===end){ return getYear(parent, start) }
+            ret = parent.clone();
+            ret.text = (start-start%10)+"s";
+            ret.natural = ((start<=l_this_year)&&(end>=l_this_year));
+            ret.getChildren = function(){ return getYears.call(parent, start, end); };
+            return ret;
+          }
           function getYears(start, end){
             var a, i;
             start = start||l_min_year;
@@ -200,9 +201,9 @@
             if(((end-start)<12)||((l_this_year-l_min_year)<=10)){
               for(i = start; i<=end; i++){ a.push(getYear(this, i)); }
             } else {
-              for(i = start; i<(start-start%10+10); i++){ a.push(getYear(this, i)); }
-              for(i = start-start%10+10; i<(end-end%10); i+=10){ a.push(getYearGroup(this, i, i+9)); }
-              for(i = end-end%10; i<=end; i++){ a.push(getYear(this, i)); }
+              //for(i = start; i<(start-start%10+10); i++){ a.push(getYear(this, i)); }
+              for(i = start-start%10; i<=(end-end%10); i+=10){ a.push(getYearGroup(this, i, i+9)); }
+              //for(i = end-end%10; i<=end; i++){ a.push(getYear(this, i)); }
             }
             return a;
           }

@@ -201,9 +201,7 @@
             if(((end-start)<12)||((l_this_year-l_min_year)<=10)){
               for(i = start; i<=end; i++){ a.push(getYear(this, i)); }
             } else {
-              //for(i = start; i<(start-start%10+10); i++){ a.push(getYear(this, i)); }
-              for(i = start-start%10; i<=(end-end%10); i+=10){ a.push(getYearGroup(this, i, i+9)); }
-              //for(i = end-end%10; i<=end; i++){ a.push(getYear(this, i)); }
+              for(i = start-start%10; i<=(end-end%10); i+=10){ a.push(getYearGroup(this, Math.max(start, i), Math.min(end, i+9))); }
             }
             return a;
           }

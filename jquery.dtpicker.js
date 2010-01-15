@@ -6,7 +6,7 @@
  * Released under the MIT license
  * http://www.opensource.net/licenses/mit-license.html
  *
- * Version 1.0a6
+ * Version 1.0a6+
  */
 (function($){
 	"use strict";
